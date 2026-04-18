@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code of Legend</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-logo">Code of Legend</div>
+        <div class="nav-right">
+            <span id="username"></span>
+            <span id="rating" class="badge"></span>
+            <button id="logout-btn" class="btn-sm">Logout</button>
+        </div>
+    </nav>
+
+    <main class="dashboard">
+        <div class="match-section">
+            <h2>Real-time Arena</h2>
+            <p>Find an opponent and compete in algorithm battles</p>
+            <button id="match-btn" class="btn-match">Find Match</button>
+            <div id="queue-box" class="queue-box hidden">
+                <div class="spinner"></div>
+                <p>Searching for opponent...</p>
+                <button id="cancel-btn" class="btn-cancel">Cancel</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/main.js"></script>
+</body>
+</html>

@@ -14,7 +14,8 @@
             "log_size_limit": 100000000,
             "log_level": "DEBUG"
         },
-        "document_root": "./public",
+        "document_root": "../public",
+        "home_page": "index.html",
         "max_connections": 10000,
         "max_connections_per_ip": 0,
         "client_max_body_size": "2M",

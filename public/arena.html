@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code of Legend - Arena</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-logo">Arena</div>
+        <div id="timer" class="nav-timer">05:00</div>
+        <div class="nav-right">
+            <button id="leave-btn" class="btn-sm">Leave</button>
+        </div>
+    </nav>
+
+    <main class="arena">
+        <aside class="arena-sidebar">
+            <h3>Players</h3>
+            <ul id="player-list" class="player-list"></ul>
+        </aside>
+
+        <div class="arena-main">
+            <div class="problem-panel">
+                <h2 id="problem-title">Two Sum</h2>
+                <div id="problem-desc">
+                    <p>Given an array of integers <code>nums</code> and an integer <code>target</code>,
+                       return indices of the two numbers that add up to <code>target</code>.</p>
+                    <p>You may assume each input has exactly one solution, and you may not use the same element twice.</p>
+                    <h3>Example</h3>
+                    <pre>Input: nums = [2, 7, 11, 15], target = 9
+Output: [0, 1]
+Explanation: nums[0] + nums[1] == 9</pre>
+                    <h3>Constraints</h3>
+                    <pre>2 &lt;= nums.length &lt;= 10^4
+-10^9 &lt;= nums[i] &lt;= 10^9
+Time limit: 1000ms / Memory limit: 256MB</pre>
+                </div>
+            </div>
+
+            <div class="editor-panel">
+                <div class="editor-toolbar">
+                    <select id="lang-select">
+                        <option value="cpp">C++</option>
+                        <option value="python">Python</option>
+                        <option value="java">Java</option>
+                    </select>
+                </div>
+                <textarea id="code-editor" spellcheck="false" placeholder="Write your code here..."></textarea>
+                <button id="submit-btn" class="btn-submit">Submit</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/arena.js"></script>
+</body>
+</html>
