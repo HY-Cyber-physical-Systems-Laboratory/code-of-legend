@@ -30,3 +30,22 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(${PROJECT_NAME} PRIVATE drogon jwt-cpp::jwt-cpp argon2)
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
+
+# ── Aggressive optimizations (Release) ──
+target_compile_options(${PROJECT_NAME} PRIVATE
+    $<$<CONFIG:Release>:
+        -O3                    # max optimization
+        -march=native          # all CPU instructions (AVX2, SSE4.2, etc.)
+        -mtune=native          # tune for this exact CPU
+        -funroll-loops         # loop unrolling
+        -ffast-math            # aggressive float math
+        -flto                  # link-time optimization
+        -fomit-frame-pointer   # free up a register
+        -fprefetch-loop-arrays # auto prefetch
+        -ftree-vectorize       # auto SIMD vectorization
+        -DNDEBUG               # disable asserts
+    >
+)
+target_link_options(${PROJECT_NAME} PRIVATE
+    $<$<CONFIG:Release>:-flto -s>
+)
