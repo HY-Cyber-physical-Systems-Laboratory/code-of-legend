@@ -70,30 +70,27 @@ fi
 
 step "PostgreSQL is running."
 
-# Create user (run as postgres or current user if already superuser)
-run_psql() {
-    if sudo -u postgres psql -c "SELECT 1" >/dev/null 2>&1; then
-        sudo -u postgres psql "$@"
-    elif psql -U postgres -c "SELECT 1" >/dev/null 2>&1; then
-        psql -U postgres "$@"
-    else
-        psql "$@"
-    fi
-}
+# All admin ops go through the postgres system user (peer auth, no password needed)
+PG="sudo -u postgres psql"
 
-run_psql -tc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'" 2>/dev/null | grep -q 1 \
-    || run_psql -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASS' CREATEDB;" 2>/dev/null \
+$PG -tc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'" 2>/dev/null | grep -q 1 \
+    || $PG -c "CREATE USER \"$DB_USER\" WITH PASSWORD '$DB_PASS' CREATEDB LOGIN;" \
     || warn "User $DB_USER may already exist"
 
-run_psql -tc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'" 2>/dev/null | grep -q 1 \
-    || run_psql -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;" 2>/dev/null \
+$PG -c "ALTER USER \"$DB_USER\" WITH PASSWORD '$DB_PASS';" 2>/dev/null || true
+
+$PG -tc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'" 2>/dev/null | grep -q 1 \
+    || $PG -c "CREATE DATABASE $DB_NAME OWNER \"$DB_USER\";" \
     || warn "Database $DB_NAME may already exist"
 
-run_psql -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;" 2>/dev/null || true
+$PG -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO \"$DB_USER\";" 2>/dev/null || true
 
 step "Running schema migration..."
-PGPASSWORD="$DB_PASS" psql -h 127.0.0.1 -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f sql/init.sql 2>&1 \
+$PG -d "$DB_NAME" -f sql/init.sql 2>&1 \
     || warn "Some tables may already exist (OK)"
+
+$PG -d "$DB_NAME" -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO \"$DB_USER\";" 2>/dev/null || true
+$PG -d "$DB_NAME" -c "GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO \"$DB_USER\";" 2>/dev/null || true
 
 # ── 4. Build ──
 step "Building project..."
