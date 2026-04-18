@@ -1,0 +1,35 @@
+{
+    "listeners": [
+        {
+            "address": "0.0.0.0",
+            "port": 8080,
+            "https": false
+        }
+    ],
+    "app": {
+        "threads_num": 4,
+        "log": {
+            "log_path": "./logs",
+            "logfile_base_name": "col",
+            "log_size_limit": 100000000,
+            "log_level": "DEBUG"
+        },
+        "document_root": "./public",
+        "max_connections": 10000,
+        "max_connections_per_ip": 0,
+        "client_max_body_size": "2M",
+        "client_max_memory_body_size": "2M"
+    },
+    "db_clients": [
+        {
+            "rdbms": "postgresql",
+            "host": "127.0.0.1",
+            "port": 5432,
+            "dbname": "code_of_legend",
+            "user": "postgres",
+            "passwd": "",
+            "connection_number": 8,
+            "name": "default"
+        }
+    ]
+}
