@@ -4,7 +4,6 @@ set -e
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT"
 
-# ── colors ──
 G='\033[0;32m'; Y='\033[1;33m'; R='\033[0;31m'; NC='\033[0m'
 step() { echo -e "\n${G}[*]${NC} $1"; }
 warn() { echo -e "${Y}[!]${NC} $1"; }
@@ -28,13 +27,13 @@ if [ "$DB_USER" = "your_username" ]; then
     fail "Edit config/config.json with your DB credentials first."
 fi
 
-# ── 2. dependencies ──
+# ── 2. Install all dependencies at once ──
 step "Checking dependencies..."
 DEPS=""
-command -v cmake  >/dev/null 2>&1 || DEPS="$DEPS cmake"
-command -v g++    >/dev/null 2>&1 || DEPS="$DEPS g++"
-command -v psql   >/dev/null 2>&1 || DEPS="$DEPS postgresql postgresql-client"
+command -v cmake   >/dev/null 2>&1 || DEPS="$DEPS cmake"
+command -v g++     >/dev/null 2>&1 || DEPS="$DEPS g++"
 command -v python3 >/dev/null 2>&1 || DEPS="$DEPS python3"
+command -v psql    >/dev/null 2>&1 || DEPS="$DEPS postgresql postgresql-client"
 
 pkg-config --exists jsoncpp   2>/dev/null || DEPS="$DEPS libjsoncpp-dev"
 pkg-config --exists openssl   2>/dev/null || DEPS="$DEPS libssl-dev"
@@ -44,32 +43,60 @@ pkg-config --exists libargon2 2>/dev/null || DEPS="$DEPS libargon2-dev"
 dpkg -s zlib1g-dev >/dev/null 2>&1        || DEPS="$DEPS zlib1g-dev"
 
 if [ -n "$DEPS" ]; then
-    step "Installing: $DEPS"
-    sudo apt-get update -qq
-    sudo apt-get install -y -qq $DEPS
+    step "Installing:$DEPS"
+    apt-get update -qq 2>/dev/null || sudo apt-get update -qq
+    apt-get install -y -qq $DEPS 2>/dev/null || sudo apt-get install -y -qq $DEPS
 fi
 
-# ── 3. PostgreSQL ──
+# ── 3. PostgreSQL: start + create user/db ──
 step "Setting up PostgreSQL..."
-sudo systemctl start postgresql 2>/dev/null || sudo service postgresql start 2>/dev/null || true
 
-if ! sudo -u postgres psql -c "SELECT 1" >/dev/null 2>&1; then
-    fail "PostgreSQL is not running."
+# Try every known way to start PostgreSQL
+pg_ctlcluster $(pg_lsclusters -h 2>/dev/null | head -1 | awk '{print $1, $2}') start 2>/dev/null \
+    || systemctl start postgresql 2>/dev/null \
+    || service postgresql start 2>/dev/null \
+    || pg_isready -q 2>/dev/null \
+    || true
+
+# Wait for it
+for i in 1 2 3 4 5; do
+    pg_isready -q 2>/dev/null && break
+    sleep 1
+done
+
+if ! pg_isready -q 2>/dev/null; then
+    fail "PostgreSQL failed to start. Try: sudo systemctl start postgresql"
 fi
 
-sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'" | grep -q 1 || \
-    sudo -u postgres psql -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASS';"
+step "PostgreSQL is running."
 
-sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'" | grep -q 1 || \
-    sudo -u postgres psql -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;"
+# Create user (run as postgres or current user if already superuser)
+run_psql() {
+    if sudo -u postgres psql -c "SELECT 1" >/dev/null 2>&1; then
+        sudo -u postgres psql "$@"
+    elif psql -U postgres -c "SELECT 1" >/dev/null 2>&1; then
+        psql -U postgres "$@"
+    else
+        psql "$@"
+    fi
+}
 
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
+run_psql -tc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'" 2>/dev/null | grep -q 1 \
+    || run_psql -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASS' CREATEDB;" 2>/dev/null \
+    || warn "User $DB_USER may already exist"
+
+run_psql -tc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'" 2>/dev/null | grep -q 1 \
+    || run_psql -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;" 2>/dev/null \
+    || warn "Database $DB_NAME may already exist"
+
+run_psql -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;" 2>/dev/null || true
 
 step "Running schema migration..."
-PGPASSWORD="$DB_PASS" psql -h 127.0.0.1 -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f sql/init.sql 2>&1 | tail -5
+PGPASSWORD="$DB_PASS" psql -h 127.0.0.1 -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f sql/init.sql 2>&1 \
+    || warn "Some tables may already exist (OK)"
 
 # ── 4. Build ──
-step "Building..."
+step "Building project..."
 mkdir -p build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release 2>&1 | tail -3
