@@ -5,8 +5,20 @@ const API = {
         const headers = { 'Content-Type': 'application/json' };
         if (this.token) headers['Authorization'] = 'Bearer ' + this.token;
 
-        const resp = await fetch(path, { ...opts, headers: { ...headers, ...opts.headers } });
-        const data = await resp.json();
+        const ac = new AbortController();
+        const timer = setTimeout(function () { ac.abort(); }, 8000);
+
+        try {
+            var resp = await fetch(path, { ...opts, signal: ac.signal, headers: { ...headers, ...opts.headers } });
+        } catch (e) {
+            clearTimeout(timer);
+            if (e.name === 'AbortError') throw new Error('Server not responding (DB may be down)');
+            throw new Error('Network error');
+        }
+        clearTimeout(timer);
+
+        var data;
+        try { data = await resp.json(); } catch (e) { throw new Error('Invalid server response'); }
         if (!resp.ok) throw new Error(data.error || 'request failed');
         return data;
     },

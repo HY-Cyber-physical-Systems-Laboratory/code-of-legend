@@ -7,7 +7,7 @@ using namespace drogon::orm;
 
 namespace col {
 
-static HttpResponsePtr jsonError(const std::string &msg, HttpStatusCode code)
+static HttpResponsePtr jsonError(const std::string &msg, HttpStatusCode code = k400BadRequest)
 {
     Json::Value body;
     body["error"] = msg;
@@ -51,6 +51,10 @@ void AuthController::signup(const HttpRequestPtr &req,
     }
 
     auto db = app().getDbClient();
+    if (!db) {
+        callback(jsonError("database not available", k503ServiceUnavailable));
+        return;
+    }
     db->execSqlAsync(
         "INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id",
         [callback, username](const Result &r) {
@@ -92,6 +96,10 @@ void AuthController::login(const HttpRequestPtr &req,
     }
 
     auto db = app().getDbClient();
+    if (!db) {
+        callback(jsonError("database not available", k503ServiceUnavailable));
+        return;
+    }
     db->execSqlAsync(
         "SELECT id, username, password_hash FROM users WHERE username = $1",
         [callback, password](const Result &r) {
