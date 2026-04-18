@@ -4,6 +4,7 @@
 #include <mutex>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace col {
 
@@ -15,9 +16,18 @@ struct WsContext {
     bool inQueue = false;
 };
 
+struct PlayerState {
+    int hp = 100;
+    int score = 0;
+    bool alive = true;
+    std::unordered_set<int> solved;
+    drogon::WebSocketConnectionPtr conn;
+};
+
 struct Room {
     std::string id;
-    std::unordered_map<std::string, drogon::WebSocketConnectionPtr> players;
+    std::unordered_map<std::string, PlayerState> players;
+    bool gameOver = false;
     std::mutex mtx;
 };
 
@@ -36,9 +46,8 @@ public:
     void handleConnectionClosed(const drogon::WebSocketConnectionPtr &) override;
 
 private:
-    void broadcast(const std::shared_ptr<Room> &room,
-                   const Json::Value &msg,
-                   const std::string &excludeUser = "");
+    void broadcast(const std::shared_ptr<Room> &room, const Json::Value &msg);
+    void broadcastHp(const std::shared_ptr<Room> &room);
 
     std::unordered_map<std::string, std::shared_ptr<Room>> rooms_;
     std::mutex roomsMtx_;
