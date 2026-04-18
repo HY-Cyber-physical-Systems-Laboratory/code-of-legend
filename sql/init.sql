@@ -1,7 +1,3 @@
-CREATE DATABASE code_of_legend;
-
-\c code_of_legend
-
 CREATE TABLE IF NOT EXISTS users (
     id          SERIAL PRIMARY KEY,
     username    VARCHAR(50)  UNIQUE NOT NULL,
