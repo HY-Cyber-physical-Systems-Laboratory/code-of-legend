@@ -250,18 +250,20 @@ body {
 .arena {
     display: flex;
     height: calc(100vh - 56px);
+    position: relative;
 }
 
 .arena-sidebar {
-    width: 240px;
+    width: 200px;
     padding: 1.25rem;
     background: var(--bg-card);
     border-right: 1px solid var(--border);
     flex-shrink: 0;
+    overflow-y: auto;
 }
 .arena-sidebar h3 {
     color: var(--text-dim);
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 1rem;
@@ -269,19 +271,19 @@ body {
 
 .player-list { list-style: none; }
 .player-list li {
-    padding: 0.65rem 0.75rem;
-    margin-bottom: 0.5rem;
+    padding: 0.6rem 0.7rem;
+    margin-bottom: 0.4rem;
     background: var(--bg-hover);
     border-radius: 8px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
-.player-list .rating { color: var(--text-dim); font-size: 0.8rem; }
+.player-list .rating { color: var(--text-dim); font-size: 0.75rem; }
 .player-list .status {
-    font-size: 0.75rem;
-    padding: 0.15rem 0.5rem;
+    font-size: 0.7rem;
+    padding: 0.1rem 0.45rem;
     border-radius: 4px;
     font-weight: 600;
 }
@@ -289,36 +291,48 @@ body {
 .status-accepted { background: rgba(16,185,129,0.15); color: var(--success); }
 .status-wrong { background: rgba(239,68,68,0.15); color: var(--error); }
 
-.arena-main {
+/* Left-right split layout */
+.arena-split {
     flex: 1;
     display: flex;
-    flex-direction: column;
     min-width: 0;
 }
 
 .problem-panel {
-    flex: 0 0 45%;
+    flex: 0 0 50%;
     padding: 1.5rem 2rem;
     overflow-y: auto;
-    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
     line-height: 1.7;
 }
-.problem-panel h2 { margin-bottom: 1rem; }
+.problem-panel h2 { margin-bottom: 1rem; font-size: 1.3rem; }
+.problem-panel h3 { margin-top: 1.2rem; margin-bottom: 0.4rem; font-size: 1rem; color: var(--text-dim); }
+.problem-panel p { margin-bottom: 0.6rem; font-size: 0.92rem; }
+.problem-panel code {
+    background: var(--bg-hover);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'Fira Code', 'Consolas', monospace;
+    font-size: 0.85rem;
+}
 .problem-panel pre {
     background: var(--bg-card);
     padding: 0.75rem 1rem;
     border-radius: 8px;
     overflow-x: auto;
     font-family: 'Fira Code', 'Consolas', monospace;
-    font-size: 0.85rem;
-    margin: 0.75rem 0;
+    font-size: 0.82rem;
+    margin: 0.5rem 0;
+    line-height: 1.5;
+    border: 1px solid var(--border);
 }
 
+/* Editor half */
 .editor-panel {
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 0.75rem 1rem;
+    min-width: 0;
     min-height: 0;
 }
 
@@ -326,49 +340,55 @@ body {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin-bottom: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #1e1e2e;
+    border-bottom: 1px solid var(--border);
 }
-
 .editor-toolbar select {
-    padding: 0.35rem 0.6rem;
+    padding: 0.3rem 0.55rem;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 6px;
     color: var(--text);
-    font-size: 0.85rem;
+    font-size: 0.82rem;
 }
 
-#code-editor {
+#monaco-container {
     flex: 1;
-    padding: 1rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-family: 'Fira Code', 'Consolas', monospace;
-    font-size: 0.9rem;
-    resize: none;
-    outline: none;
-    tab-size: 4;
-    line-height: 1.6;
+    min-height: 0;
 }
-#code-editor:focus { border-color: var(--primary); }
+
+.editor-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.45rem 0.75rem;
+    background: #1e1e2e;
+    border-top: 1px solid var(--border);
+}
+.editor-status {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
 
 .btn-submit {
-    align-self: flex-end;
-    margin-top: 0.5rem;
-    padding: 0.65rem 2rem;
+    padding: 0.5rem 1.8rem;
     background: var(--success);
     color: #fff;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     cursor: pointer;
     transition: opacity 0.2s;
 }
 .btn-submit:hover { opacity: 0.9; }
 .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Drag handle between panels */
+.split-handle {
+    display: none;
+}
 
 .nav-timer {
     font-size: 1.4rem;

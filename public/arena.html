@@ -21,7 +21,8 @@
             <ul id="player-list" class="player-list"></ul>
         </aside>
 
-        <div class="arena-main">
+        <div class="arena-split">
+            <!-- Left: Problem -->
             <div class="problem-panel">
                 <h2 id="problem-title">Two Sum</h2>
                 <div id="problem-desc">
@@ -39,6 +40,7 @@ Time limit: 1000ms / Memory limit: 256MB</pre>
                 </div>
             </div>
 
+            <!-- Right: Monaco Editor -->
             <div class="editor-panel">
                 <div class="editor-toolbar">
                     <select id="lang-select">
@@ -46,13 +48,21 @@ Time limit: 1000ms / Memory limit: 256MB</pre>
                         <option value="python">Python</option>
                         <option value="java">Java</option>
                     </select>
+                    <button id="reset-btn" class="btn-sm">Reset</button>
                 </div>
-                <textarea id="code-editor" spellcheck="false" placeholder="Write your code here..."></textarea>
-                <button id="submit-btn" class="btn-submit">Submit</button>
+                <div id="monaco-container"></div>
+                <div class="editor-footer">
+                    <span id="editor-status" class="editor-status"></span>
+                    <button id="submit-btn" class="btn-submit">Submit</button>
+                </div>
             </div>
         </div>
+
+        <!-- Draggable divider -->
+        <div id="split-handle" class="split-handle"></div>
     </main>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
     <script src="/js/api.js"></script>
     <script src="/js/arena.js"></script>
 </body>
