@@ -1,5 +1,4 @@
 build/
-!build/code-of-legend
 logs/
 compile_commands.json
 .cache/

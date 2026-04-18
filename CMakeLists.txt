@@ -47,5 +47,16 @@ target_compile_options(${PROJECT_NAME} PRIVATE
     >
 )
 target_link_options(${PROJECT_NAME} PRIVATE
-    $<$<CONFIG:Release>:-flto -s>
+    $<$<CONFIG:Release>:-flto -s -static-libgcc -static-libstdc++>
+)
+
+# Static link OpenSSL, libpq, argon2, zlib, uuid, jsoncpp
+set(OPENSSL_USE_STATIC_LIBS TRUE)
+find_package(OpenSSL REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    -static-libgcc -static-libstdc++
+    -Wl,-Bstatic
+    ssl crypto pq argon2 jsoncpp uuid z
+    -Wl,-Bdynamic
+    pthread dl
 )
