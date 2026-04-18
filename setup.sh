@@ -83,7 +83,7 @@ mkdir -p build
 cd build
 
 step "Running cmake..."
-cmake .. -DCMAKE_BUILD_TYPE=Release || fail "CMake configuration failed"
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 || fail "CMake configuration failed"
 
 step "Compiling..."
 cmake --build . -j"$(nproc)" || fail "Build failed"
