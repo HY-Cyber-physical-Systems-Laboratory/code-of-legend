@@ -57,25 +57,41 @@ pg_isready -q 2>/dev/null || fail "PostgreSQL failed to start"
 
 step "PostgreSQL is running. Setting up database..."
 
-# Use su instead of sudo (fixes permission issues when running as root)
-PG() { su - postgres -c "psql $*"; }
+# Detect how to run psql as postgres admin
+if sudo -n -u postgres psql -c "SELECT 1" >/dev/null 2>&1; then
+    PG() { sudo -u postgres psql "$@"; }
+elif su - postgres -c "psql -c 'SELECT 1'" </dev/null >/dev/null 2>&1; then
+    PG() { su - postgres -c "psql $*"; }
+elif psql -U postgres -c "SELECT 1" >/dev/null 2>&1; then
+    PG() { psql -U postgres "$@"; }
+else
+    warn "Cannot run psql as postgres admin. Skipping user/db creation."
+    warn "Make sure DB user '$DB_USER' and database '$DB_NAME' exist."
+    PG() { return 1; }
+fi
 
-PG "-tc \"SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'\"" 2>/dev/null | grep -q 1 \
-    || PG "-c \"CREATE ROLE \\\"$DB_USER\\\" WITH LOGIN PASSWORD '$DB_PASS' CREATEDB;\"" \
+PG -tc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'" 2>/dev/null | grep -q 1 \
+    || PG -c "CREATE ROLE \"$DB_USER\" WITH LOGIN PASSWORD '$DB_PASS' CREATEDB;" 2>/dev/null \
     || warn "User $DB_USER may already exist"
 
-PG "-c \"ALTER ROLE \\\"$DB_USER\\\" WITH PASSWORD '$DB_PASS';\"" 2>/dev/null || true
+PG -c "ALTER ROLE \"$DB_USER\" WITH PASSWORD '$DB_PASS';" 2>/dev/null || true
 
-PG "-tc \"SELECT 1 FROM pg_database WHERE datname='$DB_NAME'\"" 2>/dev/null | grep -q 1 \
-    || PG "-c \"CREATE DATABASE $DB_NAME OWNER \\\"$DB_USER\\\";\"" \
+PG -tc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'" 2>/dev/null | grep -q 1 \
+    || PG -c "CREATE DATABASE $DB_NAME OWNER \"$DB_USER\";" 2>/dev/null \
     || warn "Database $DB_NAME may already exist"
 
-PG "-c \"GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO \\\"$DB_USER\\\";\"" 2>/dev/null || true
+PG -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO \"$DB_USER\";" 2>/dev/null || true
 
 step "Running schema migration..."
-su - postgres -c "psql -d $DB_NAME -f $ROOT/sql/init.sql" 2>&1 || warn "Some tables may already exist (OK)"
-su - postgres -c "psql -d $DB_NAME -c 'GRANT ALL ON ALL TABLES IN SCHEMA public TO \"$DB_USER\";'" 2>/dev/null || true
-su - postgres -c "psql -d $DB_NAME -c 'GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO \"$DB_USER\";'" 2>/dev/null || true
+export PGPASSWORD="$DB_PASS"
+psql -h 127.0.0.1 -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f sql/init.sql 2>&1 \
+    || warn "Some tables may already exist (OK)"
+
+psql -h 127.0.0.1 -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" \
+    -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO \"$DB_USER\";" 2>/dev/null || true
+psql -h 127.0.0.1 -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" \
+    -c "GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO \"$DB_USER\";" 2>/dev/null || true
+unset PGPASSWORD
 
 # ── 4. Build ──
 step "Building project..."
